@@ -25,3 +25,6 @@ This project leverages **deep learning (CNN)** to detect pneumonia from chest X-
  | **Matplotlib/Seaborn**    | Visualized model performance (accuracy/loss plots, confusion matrix).      | Matches my **Power BI dashboard** work at Sakon.        |
 
 ---
+
+For a visual walkthrough of the project outputs, check out the OutputSnaps folder—I’ve compiled chronologically arranged snapshots of all key visualizations and results for easy reference! 📸📂
+---
