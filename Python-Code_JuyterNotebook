@@ -1,0 +1,144 @@
+#1. Importing Libraries
+
+import os
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
+from tensorflow.keras.optimizers import Adam
+from sklearn.utils import class_weight
+import matplotlib.pyplot as plt
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#2. Loading and Preprocessing Data
+
+# Define paths
+base_dir = r'C:\Users\Bhaskar\Documents\MSc-DA_Notes\Module6\submissions\chest_xray\chest_xray'
+train_dir = os.path.join(base_dir, 'train')
+val_dir = os.path.join(base_dir, 'val')
+test_dir = os.path.join(base_dir, 'test')
+
+# Data Augmentation and Rescaling
+train_datagen = ImageDataGenerator(rescale=1./255, shear_range=0.2, zoom_range=0.2, horizontal_flip=True)
+val_datagen = ImageDataGenerator(rescale=1./255)
+
+train_generator = train_datagen.flow_from_directory(train_dir, target_size=(150, 150), batch_size=32, class_mode='binary')
+val_generator = val_datagen.flow_from_directory(val_dir, target_size=(150, 150), batch_size=32, class_mode='binary')
+test_generator = val_datagen.flow_from_directory(test_dir, target_size=(150, 150), batch_size=32, class_mode='binary')
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#3. Compute Class Weights
+
+class_weights = class_weight.compute_class_weight(
+    class_weight='balanced',
+    classes=np.unique(train_generator.classes),
+    y=train_generator.classes
+)
+class_weight_dict = dict(enumerate(class_weights))
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#4. Building the CNN Model
+
+model = models.Sequential()
+
+# Convolutional Layers
+model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(150, 150, 3)))
+model.add(layers.MaxPooling2D((2, 2)))
+
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D((2, 2)))
+
+model.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D((2, 2)))
+
+model.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D((2, 2)))
+
+# Flatten and Dense Layers
+model.add(layers.Flatten())
+model.add(layers.Dense(512, activation='relu'))
+model.add(layers.Dropout(0.5))
+model.add(layers.Dense(1, activation='sigmoid'))  # Binary classification
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#5. Model Compilation
+
+opt = Adam(learning_rate=0.0001)
+model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#6. Training the Mode
+
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.00001)
+
+# Update the model fitting code to include the callback
+history = model.fit(
+    train_generator,
+    steps_per_epoch=train_generator.samples // 32,
+    epochs=30,
+    validation_data=val_generator,
+    validation_steps=val_generator.samples // 32,
+    class_weight=class_weight_dict,
+    callbacks=[reduce_lr]  # Add learning rate scheduler
+)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#7. Model Accuracy Measurement
+
+loss, accuracy = model.evaluate(test_generator)
+print(f'Test Accuracy: {accuracy * 100:.2f}%')
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#8. Function to plot images and predictions
+
+import matplotlib.pyplot as plt
+import numpy as np
+from tensorflow.keras.preprocessing import image
+
+def plot_image_comparison(generator, model, num_images=5):
+    plt.figure(figsize=(15, 10))
+    for i in range(num_images):
+        img, label = next(generator)
+        pred = model.predict(img)
+        pred_label = 'Pneumonia' if pred[0] > 0.5 else 'Normal'  # Take the first prediction
+        true_label = 'Pneumonia' if label[0] == 1 else 'Normal'  # Convert label to string
+
+        plt.subplot(1, num_images, i+1)
+        plt.imshow(img[0])
+        plt.title(f"True: {true_label}\nPred: {pred_label}")
+        plt.axis('off')
+    plt.tight_layout()
+    plt.show()
+
+# Test the function with the test generator
+plot_image_comparison(test_generator, model, num_images=5)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#9.1 Accuracy plot
+
+plt.plot(history.history['accuracy'], label='train accuracy')
+plt.plot(history.history['val_accuracy'], label='val accuracy')
+plt.title('Model Accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(loc='upper left')
+plt.show()
+
+#9.2 Loss plot
+
+plt.plot(history.history['loss'], label='train loss')
+plt.plot(history.history['val_loss'], label='val loss')
+plt.title('Model Loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(loc='upper left')
+plt.show()
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#10. classification_report, confusion_matrix
+
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Evaluate on test data
+y_true = test_generator.classes
+y_pred = model.predict(test_generator)
+y_pred = (y_pred > 0.5).astype(int)  # Convert probabilities to binary predictions
+
+# Generate classification report
+print(classification_report(y_true, y_pred, target_names=['Normal', 'Pneumonia']))
+
+# Optional: Display Confusion Matrix
+print(confusion_matrix(y_true, y_pred))
