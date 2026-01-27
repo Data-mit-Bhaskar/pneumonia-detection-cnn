@@ -1,5 +1,5 @@
 # **Pneumonia Detection using CNN**
-*A **Semester 1 MSc. Computer Vision & AI** project at **Berlin School of Business & Innovation (BSBI)**, where I built a **Convolutional Neural Network (CNN)** to classify chest X-ray images for pneumonia detection, achieving **92.31% accuracy**. This project aligns with my professional experience at **Sakon (GSG)**, where I optimized data workflows and reduced errors by **11%**, and my focus on **AI-driven solutions for real-world challenges** like healthcare diagnostics.*
+*A **Semester 3 MSc. Computer Vision & AI** project at **Berlin School of Business & Innovation (BSBI)**, where I built a **Convolutional Neural Network (CNN)** to classify chest X-ray images for pneumonia detection, achieving **92.31% accuracy**. This project aligns with my professional experience at **Sakon (GSG)**, where I optimized data workflows and reduced errors by **11%**, and my focus on **AI-driven solutions for real-world challenges** like healthcare diagnostics.*
 
 ---
 
